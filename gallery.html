@@ -165,14 +165,22 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        // Immediate debug
+        console.log('Inline script running');
+        document.getElementById('debugInfo').innerHTML = 'Inline script running...';
+
         // Debug script loading
         window.addEventListener('DOMContentLoaded', () => {
             console.log('DOM loaded');
+            document.getElementById('debugInfo').innerHTML += '<br>DOM loaded';
             console.log('THREE.js available:', typeof THREE !== 'undefined');
-            console.log('Canvas element:', document.getElementById('gameCanvas'));
-            console.log('Start button:', document.getElementById('startBtn'));
+            document.getElementById('debugInfo').innerHTML += '<br>THREE: ' + (typeof THREE !== 'undefined');
         });
     </script>
     <script src="gallery.js"></script>
+    <script>
+        console.log('After gallery.js load');
+        document.getElementById('debugInfo').innerHTML += '<br>After gallery.js';
+    </script>
 </body>
 </html>

@@ -626,8 +626,9 @@ function debugLog(message) {
 
 // Initialize the game when the page loads
 let gallery = null;
-window.addEventListener('load', () => {
-    debugLog('Window loaded');
+
+function initGallery() {
+    debugLog('Init function called');
     debugLog('THREE available: ' + (typeof THREE !== 'undefined'));
     debugLog('Canvas: ' + (document.getElementById('gameCanvas') ? 'Found' : 'NOT FOUND'));
     debugLog('Start btn: ' + (document.getElementById('startBtn') ? 'Found' : 'NOT FOUND'));
@@ -640,5 +641,24 @@ window.addEventListener('load', () => {
     } catch (error) {
         debugLog('ERROR: ' + error.message);
         console.error('Failed to create gallery:', error);
+        console.error('Stack trace:', error.stack);
+    }
+}
+
+// Try multiple initialization methods
+if (document.readyState === 'loading') {
+    debugLog('Document still loading, waiting...');
+    document.addEventListener('DOMContentLoaded', initGallery);
+} else if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    debugLog('Document already loaded, initializing immediately');
+    // Small delay to ensure THREE.js is loaded
+    setTimeout(initGallery, 100);
+}
+
+// Backup: also listen for window load
+window.addEventListener('load', () => {
+    if (!gallery) {
+        debugLog('Window load event, initializing...');
+        initGallery();
     }
 });

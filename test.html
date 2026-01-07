@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - THREE.js Pointer Lock</title>
+    <style>
+        body { margin: 0; background: #000; color: #0ff; font-family: monospace; }
+        #canvas { width: 100vw; height: 100vh; display: block; }
+        #menu { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.9); padding: 30px; border: 2px solid #0ff; z-index: 100; }
+        button { padding: 15px 30px; background: #0ff; color: #000; border: none;
+                 font-size: 18px; cursor: pointer; font-family: monospace; }
+        #info { position: fixed; top: 10px; left: 10px; z-index: 50; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <div>Status: <span id="status">Loading...</span></div>
+        <div>THREE.js: <span id="three">...</span></div>
+        <div>Pointer: <span id="pointer">Unlocked</span></div>
+    </div>
+
+    <div id="menu">
+        <h1>SIMPLE TEST</h1>
+        <p>Click to start</p>
+        <button id="startBtn">START</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const status = document.getElementById('status');
+        const threeStatus = document.getElementById('three');
+        const pointerStatus = document.getElementById('pointer');
+        const menu = document.getElementById('menu');
+        const canvas = document.getElementById('canvas');
+        const startBtn = document.getElementById('startBtn');
+
+        // Check THREE.js
+        if (typeof THREE !== 'undefined') {
+            threeStatus.textContent = 'Loaded';
+            threeStatus.style.color = '#0f0';
+            status.textContent = 'Ready';
+        } else {
+            threeStatus.textContent = 'FAILED';
+            threeStatus.style.color = '#f00';
+            status.textContent = 'ERROR';
+        }
+
+        // Setup THREE.js scene
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2a);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Add a simple cube
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        // Pointer lock
+        startBtn.addEventListener('click', () => {
+            console.log('Button clicked');
+            status.textContent = 'Requesting lock...';
+            canvas.requestPointerLock();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement === canvas) {
+                console.log('Pointer locked');
+                menu.style.display = 'none';
+                pointerStatus.textContent = 'LOCKED';
+                pointerStatus.style.color = '#0f0';
+                status.textContent = 'Playing';
+            } else {
+                console.log('Pointer unlocked');
+                menu.style.display = 'block';
+                pointerStatus.textContent = 'Unlocked';
+                pointerStatus.style.color = '#f00';
+                status.textContent = 'Paused';
+            }
+        });
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        console.log('Test page loaded');
+    </script>
+</body>
+</html>
