@@ -393,9 +393,12 @@ class PS1ArtGallery {
         const startBtn = document.getElementById('startBtn');
         if (startBtn) {
             startBtn.addEventListener('click', () => {
-                console.log('Start button clicked');
+                debugLog('Start button clicked!');
                 this.lockPointer();
             });
+            debugLog('Button listener attached');
+        } else {
+            debugLog('ERROR: Start button not found!');
         }
 
         // Support both webkit and standard pointer lock
@@ -442,13 +445,13 @@ class PS1ArtGallery {
         this.mouse.locked = isLocked;
 
         if (isLocked) {
-            console.log('Pointer locked');
+            debugLog('Pointer LOCKED successfully!');
             document.getElementById('instructions').classList.add('hidden');
             document.getElementById('ui').classList.remove('hidden');
             document.getElementById('crosshair').classList.remove('hidden');
             document.body.style.cursor = 'none';
         } else {
-            console.log('Pointer unlocked');
+            debugLog('Pointer unlocked');
             document.getElementById('instructions').classList.remove('hidden');
             document.getElementById('ui').classList.add('hidden');
             document.getElementById('crosshair').classList.add('hidden');
@@ -458,7 +461,8 @@ class PS1ArtGallery {
 
     lockPointer() {
         const canvas = this.canvas;
-        console.log('Requesting pointer lock');
+        debugLog('Requesting pointer lock...');
+        debugLog('Canvas element: ' + (canvas ? 'exists' : 'NULL'));
 
         // Support different browser prefixes
         canvas.requestPointerLock = canvas.requestPointerLock ||
@@ -466,9 +470,14 @@ class PS1ArtGallery {
                                    canvas.webkitRequestPointerLock;
 
         if (canvas.requestPointerLock) {
-            canvas.requestPointerLock();
+            try {
+                canvas.requestPointerLock();
+                debugLog('Pointer lock requested');
+            } catch (e) {
+                debugLog('Pointer lock error: ' + e.message);
+            }
         } else {
-            console.error('Pointer lock not supported');
+            debugLog('ERROR: Pointer lock not supported!');
         }
     }
 
@@ -606,7 +615,30 @@ class PS1ArtGallery {
     }
 }
 
+// Debug helper
+function debugLog(message) {
+    console.log(message);
+    const debugDiv = document.getElementById('debugInfo');
+    if (debugDiv) {
+        debugDiv.innerHTML += '<br>' + message;
+    }
+}
+
 // Initialize the game when the page loads
+let gallery = null;
 window.addEventListener('load', () => {
-    new PS1ArtGallery();
+    debugLog('Window loaded');
+    debugLog('THREE available: ' + (typeof THREE !== 'undefined'));
+    debugLog('Canvas: ' + (document.getElementById('gameCanvas') ? 'Found' : 'NOT FOUND'));
+    debugLog('Start btn: ' + (document.getElementById('startBtn') ? 'Found' : 'NOT FOUND'));
+
+    try {
+        debugLog('Creating PS1ArtGallery...');
+        gallery = new PS1ArtGallery();
+        debugLog('Gallery created successfully!');
+        window.gallery = gallery; // Make it accessible for debugging
+    } catch (error) {
+        debugLog('ERROR: ' + error.message);
+        console.error('Failed to create gallery:', error);
+    }
 });

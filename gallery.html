@@ -140,13 +140,18 @@
 <body>
     <div id="loading">LOADING GALLERY...</div>
 
+    <div id="debug" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px; font-family: monospace; font-size: 12px; z-index: 300; max-width: 300px;">
+        <div>Debug Info:</div>
+        <div id="debugInfo">Initializing...</div>
+    </div>
+
     <div id="instructions">
         <h1>PS1 ART GALLERY</h1>
         <p><strong>WASD</strong> - Move</p>
         <p><strong>MOUSE</strong> - Look Around</p>
         <p><strong>ESC</strong> - Pause</p>
         <p>Explore the dark dungeon gallery and discover the artwork within...</p>
-        <button id="startBtn">ENTER GALLERY</button>
+        <button id="startBtn" onclick="console.log('Button clicked directly!')">ENTER GALLERY</button>
     </div>
 
     <div id="ui" class="hidden">
@@ -159,6 +164,15 @@
     <canvas id="gameCanvas"></canvas>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Debug script loading
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            console.log('THREE.js available:', typeof THREE !== 'undefined');
+            console.log('Canvas element:', document.getElementById('gameCanvas'));
+            console.log('Start button:', document.getElementById('startBtn'));
+        });
+    </script>
     <script src="gallery.js"></script>
 </body>
 </html>
