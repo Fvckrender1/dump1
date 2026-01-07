@@ -659,53 +659,34 @@ class PS1ArtGallery {
     }
 }
 
-// Debug helper
-function debugLog(message) {
-    console.log(message);
-    const debugDiv = document.getElementById('debugInfo');
-    if (debugDiv) {
-        debugDiv.innerHTML += '<br>' + message;
-    }
-}
-
-// Initialize the game when the page loads
+// Initialize immediately when script loads
+console.log('Gallery script loaded, waiting for window.load...');
 let gallery = null;
 
-function initGallery() {
-    debugLog('Init function called');
-    debugLog('THREE available: ' + (typeof THREE !== 'undefined'));
-    debugLog('Canvas: ' + (document.getElementById('gameCanvas') ? 'Found' : 'NOT FOUND'));
-    debugLog('Start btn: ' + (document.getElementById('startBtn') ? 'Found' : 'NOT FOUND'));
-
-    try {
-        debugLog('Creating PS1ArtGallery...');
-        gallery = new PS1ArtGallery();
-        debugLog('Gallery created successfully!');
-        window.gallery = gallery; // Make it accessible for debugging
-    } catch (error) {
-        debugLog('ERROR: ' + error.message);
-        console.error('Failed to create gallery:', error);
-        console.error('Stack trace:', error.stack);
-    }
-}
-
-// Try multiple initialization methods
-if (document.readyState === 'loading') {
-    debugLog('Document still loading, waiting...');
-    document.addEventListener('DOMContentLoaded', initGallery);
-} else if (document.readyState === 'interactive' || document.readyState === 'complete') {
-    debugLog('Document already loaded, initializing immediately');
-    // Small delay to ensure THREE.js is loaded
-    setTimeout(initGallery, 100);
-}
-
-// Backup: also listen for window load
 window.addEventListener('load', () => {
-    if (!gallery) {
-        debugLog('Window load event, initializing...');
-        initGallery();
+    console.log('Window loaded, initializing gallery...');
+    
+    // Check THREE.js
+    if (typeof THREE === 'undefined') {
+        console.error('THREE.js not loaded!');
+        document.getElementById('loading').textContent = 'ERROR: THREE.js not loaded';
+        return;
+    }
+    
+    console.log('THREE.js ready, creating gallery...');
+    
+    try {
+        gallery = new PS1ArtGallery();
+        console.log('Gallery created successfully!');
+        window.gallery = gallery;
+    } catch (error) {
+        console.error('Failed to create gallery:', error);
+        console.error('Stack:', error.stack);
+        document.getElementById('loading').textContent = 'ERROR: ' + error.message;
     }
 });
+
+console.log('Initialization code registered');
     </script>
 </body>
 </html>
