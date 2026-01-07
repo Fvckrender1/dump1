@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PS1 Art Gallery - Dungeon Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #0ff;
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #008080;
+            font-size: 14px;
+            z-index: 100;
+            pointer-events: none;
+            font-weight: bold;
+        }
+
+        #crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #0ff;
+            box-shadow: 0 0 5px #0ff;
+        }
+
+        #crosshair::before {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #crosshair::after {
+            height: 2px;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        #instructions {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #0ff;
+            padding: 30px;
+            color: #0ff;
+            text-align: center;
+            z-index: 200;
+            max-width: 500px;
+            box-shadow: 0 0 20px #0ff;
+        }
+
+        #instructions h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 #008080;
+        }
+
+        #instructions p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        #instructions button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: #0ff;
+            color: #000;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 10px #0ff;
+            transition: all 0.2s;
+        }
+
+        #instructions button:hover {
+            background: #fff;
+            box-shadow: 0 0 20px #fff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #0ff;
+            font-size: 24px;
+            text-shadow: 2px 2px 0 #008080;
+            z-index: 150;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">LOADING GALLERY...</div>
+
+    <div id="instructions">
+        <h1>PS1 ART GALLERY</h1>
+        <p><strong>WASD</strong> - Move</p>
+        <p><strong>MOUSE</strong> - Look Around</p>
+        <p><strong>ESC</strong> - Pause</p>
+        <p>Explore the dark dungeon gallery and discover the artwork within...</p>
+        <button id="startBtn">ENTER GALLERY</button>
+    </div>
+
+    <div id="ui" class="hidden">
+        <div>FPS: <span id="fps">60</span></div>
+        <div>Position: <span id="position">0, 0, 0</span></div>
+        <div>Artworks Found: <span id="artCount">0</span></div>
+    </div>
+
+    <div id="crosshair" class="hidden"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="gallery.js"></script>
+</body>
+</html>

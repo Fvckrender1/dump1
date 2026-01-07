@@ -1,0 +1,558 @@
+// PS1 Art Gallery - Dungeon Explorer
+// Vintage PS1-style first-person art gallery game
+
+class PS1ArtGallery {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.clock = new THREE.Clock();
+
+        // Player properties
+        this.player = {
+            position: new THREE.Vector3(0, 1.6, 0),
+            velocity: new THREE.Vector3(0, 0, 0),
+            rotation: new THREE.Euler(0, 0, 0),
+            speed: 5,
+            height: 1.6,
+            radius: 0.3
+        };
+
+        // Controls
+        this.keys = {};
+        this.mouse = { x: 0, y: 0, locked: false };
+        this.mouseSensitivity = 0.002;
+
+        // Game state
+        this.paused = false;
+        this.artworksFound = new Set();
+        this.artworks = [];
+
+        // Performance
+        this.fps = 60;
+        this.fpsCounter = 0;
+        this.fpsTime = 0;
+
+        // PS1 effect settings
+        this.ps1Settings = {
+            vertexJitter: 0.005,
+            resolution: 0.5, // Lower = more pixelated
+            ditherStrength: 1.0
+        };
+
+        this.init();
+    }
+
+    init() {
+        this.setupScene();
+        this.setupRenderer();
+        this.setupCamera();
+        this.createDungeon();
+        this.setupControls();
+        this.setupUI();
+
+        // Hide loading screen
+        document.getElementById('loading').classList.add('hidden');
+    }
+
+    setupScene() {
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x0a0a0f);
+
+        // Add fog for atmosphere
+        this.scene.fog = new THREE.Fog(0x0a0a0f, 1, 25);
+    }
+
+    setupRenderer() {
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvas,
+            antialias: false // No AA for PS1 look
+        });
+
+        // Low resolution for PS1 effect
+        const width = window.innerWidth * this.ps1Settings.resolution;
+        const height = window.innerHeight * this.ps1Settings.resolution;
+        this.renderer.setSize(width, height);
+        this.canvas.style.width = '100vw';
+        this.canvas.style.height = '100vh';
+
+        this.renderer.shadowMap.enabled = false; // No shadows for performance
+    }
+
+    setupCamera() {
+        this.camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            100
+        );
+        this.camera.position.copy(this.player.position);
+    }
+
+    createDungeon() {
+        // Create materials with PS1-style look
+        const wallMaterial = this.createPS1Material(0x2a2a3a);
+        const floorMaterial = this.createPS1Material(0x1a1a2a);
+        const ceilingMaterial = this.createPS1Material(0x0a0a1a);
+        const accentMaterial = this.createPS1Material(0x4a2a5a);
+
+        // Floor
+        const floorGeometry = new THREE.PlaneGeometry(50, 50, 20, 20);
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.userData.isFloor = true;
+        this.addVertexJitter(floor);
+        this.scene.add(floor);
+
+        // Ceiling
+        const ceiling = new THREE.Mesh(floorGeometry.clone(), ceilingMaterial);
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.y = 4;
+        this.addVertexJitter(ceiling);
+        this.scene.add(ceiling);
+
+        // Create main gallery halls in a cross pattern
+        this.createHallway(0, 0, 20, 5, wallMaterial, accentMaterial); // Main hall (horizontal)
+        this.createHallway(-2.5, 0, 5, 20, wallMaterial, accentMaterial); // Cross hall (vertical)
+
+        // Create gallery rooms
+        this.createGalleryRoom(10, 0, 10, wallMaterial, accentMaterial);
+        this.createGalleryRoom(-10, 0, 10, wallMaterial, accentMaterial);
+        this.createGalleryRoom(0, 0, 10, wallMaterial, accentMaterial);
+        this.createGalleryRoom(0, 0, -10, wallMaterial, accentMaterial);
+
+        // Add atmospheric lighting
+        const ambientLight = new THREE.AmbientLight(0x404080, 0.3);
+        this.scene.add(ambientLight);
+
+        // Add point lights in rooms
+        this.addLight(-8, 2, 8, 0x00ffff, 5);
+        this.addLight(8, 2, 8, 0xff00ff, 5);
+        this.addLight(-8, 2, -8, 0xffff00, 5);
+        this.addLight(8, 2, -8, 0x00ff00, 5);
+        this.addLight(0, 2, 0, 0xff0080, 7);
+
+        // Add decorative pillars
+        this.createPillar(5, 0, 5, accentMaterial);
+        this.createPillar(-5, 0, 5, accentMaterial);
+        this.createPillar(5, 0, -5, accentMaterial);
+        this.createPillar(-5, 0, -5, accentMaterial);
+
+        // Create artworks on walls
+        this.createArtwork('ABSTRACT_VOID', -9.9, 2, 8, Math.PI / 2, 0xff00ff);
+        this.createArtwork('CYBER_DREAMS', 9.9, 2, 8, -Math.PI / 2, 0x00ffff);
+        this.createArtwork('NEON_SOULS', -9.9, 2, -8, Math.PI / 2, 0xffff00);
+        this.createArtwork('DIGITAL_DECAY', 9.9, 2, -8, -Math.PI / 2, 0x00ff00);
+        this.createArtwork('GLITCH_REALITY', 0, 2, -9.9, 0, 0xff0080);
+        this.createArtwork('VOID_WALKER', 0, 2, 9.9, Math.PI, 0x8000ff);
+    }
+
+    createPS1Material(color) {
+        return new THREE.MeshLambertMaterial({
+            color: color,
+            flatShading: true, // Important for PS1 look
+            vertexColors: true
+        });
+    }
+
+    addVertexJitter(mesh) {
+        // Add random colors to vertices for PS1-style dithering effect
+        const geometry = mesh.geometry;
+        const colors = [];
+        const positionAttribute = geometry.attributes.position;
+
+        for (let i = 0; i < positionAttribute.count; i++) {
+            const variation = 0.9 + Math.random() * 0.1;
+            colors.push(variation, variation, variation);
+        }
+
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    }
+
+    createHallway(x, y, width, depth, wallMaterial, accentMaterial) {
+        // Left wall
+        const leftWall = new THREE.Mesh(
+            new THREE.BoxGeometry(depth, 4, 0.5, 5, 5, 1),
+            wallMaterial
+        );
+        leftWall.position.set(x - width/2 - 0.25, y + 2, 0);
+        leftWall.userData.isWall = true;
+        this.addVertexJitter(leftWall);
+        this.scene.add(leftWall);
+
+        // Right wall
+        const rightWall = new THREE.Mesh(
+            new THREE.BoxGeometry(depth, 4, 0.5, 5, 5, 1),
+            wallMaterial
+        );
+        rightWall.position.set(x + width/2 + 0.25, y + 2, 0);
+        rightWall.userData.isWall = true;
+        this.addVertexJitter(rightWall);
+        this.scene.add(rightWall);
+    }
+
+    createGalleryRoom(x, y, z, wallMaterial, accentMaterial) {
+        const roomSize = 7;
+
+        // Four walls
+        const walls = [
+            { pos: [x - roomSize/2, y + 2, z], rot: [0, 0, 0], size: [0.5, 4, roomSize] },
+            { pos: [x + roomSize/2, y + 2, z], rot: [0, 0, 0], size: [0.5, 4, roomSize] },
+            { pos: [x, y + 2, z - roomSize/2], rot: [0, 0, 0], size: [roomSize, 4, 0.5] },
+            { pos: [x, y + 2, z + roomSize/2], rot: [0, 0, 0], size: [roomSize, 4, 0.5] }
+        ];
+
+        walls.forEach(wallData => {
+            const wall = new THREE.Mesh(
+                new THREE.BoxGeometry(...wallData.size, 3, 3, 1),
+                wallMaterial
+            );
+            wall.position.set(...wallData.pos);
+            wall.userData.isWall = true;
+            this.addVertexJitter(wall);
+            this.scene.add(wall);
+        });
+    }
+
+    createPillar(x, y, z, material) {
+        const pillar = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 4, 0.6, 2, 5, 2),
+            material
+        );
+        pillar.position.set(x, y + 2, z);
+        pillar.userData.isWall = true;
+        this.addVertexJitter(pillar);
+        this.scene.add(pillar);
+    }
+
+    addLight(x, y, z, color, intensity) {
+        const light = new THREE.PointLight(color, intensity, 15);
+        light.position.set(x, y, z);
+        this.scene.add(light);
+
+        // Add visible light source
+        const bulbGeometry = new THREE.SphereGeometry(0.1, 6, 6);
+        const bulbMaterial = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.8
+        });
+        const bulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+        bulb.position.set(x, y, z);
+        this.scene.add(bulb);
+    }
+
+    createArtwork(title, x, y, z, rotation, glowColor) {
+        // Create artwork frame
+        const frameGeometry = new THREE.BoxGeometry(2.5, 2, 0.1);
+        const frameMaterial = new THREE.MeshLambertMaterial({
+            color: 0x1a1a1a,
+            flatShading: true
+        });
+        const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+        frame.position.set(x, y, z);
+        frame.rotation.y = rotation;
+        this.scene.add(frame);
+
+        // Create canvas with procedural art
+        const canvasGeometry = new THREE.PlaneGeometry(2, 1.5);
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 96;
+        const ctx = canvas.getContext('2d');
+
+        // Generate procedural artwork
+        this.generateProceduralArt(ctx, title, glowColor);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.minFilter = THREE.NearestFilter;
+        texture.magFilter = THREE.NearestFilter;
+
+        const canvasMaterial = new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.DoubleSide
+        });
+        const artCanvas = new THREE.Mesh(canvasGeometry, canvasMaterial);
+        artCanvas.position.set(x, y, z);
+        artCanvas.rotation.y = rotation;
+        artCanvas.userData.isArtwork = true;
+        artCanvas.userData.title = title;
+        this.scene.add(artCanvas);
+
+        // Add glow effect
+        const glowGeometry = new THREE.PlaneGeometry(2.3, 1.8);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: glowColor,
+            transparent: true,
+            opacity: 0.1,
+            side: THREE.DoubleSide
+        });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        glow.position.set(x, y, z);
+        glow.rotation.y = rotation;
+        this.scene.add(glow);
+
+        this.artworks.push({
+            position: new THREE.Vector3(x, y, z),
+            title: title,
+            mesh: artCanvas
+        });
+    }
+
+    generateProceduralArt(ctx, title, color) {
+        // Create PS1-style procedural artwork
+        const r = (color >> 16) & 0xff;
+        const g = (color >> 8) & 0xff;
+        const b = color & 0xff;
+
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, 128, 96);
+        gradient.addColorStop(0, `rgb(${r * 0.2}, ${g * 0.2}, ${b * 0.2})`);
+        gradient.addColorStop(1, `rgb(${r * 0.05}, ${g * 0.05}, ${b * 0.05})`);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 128, 96);
+
+        // Generate different patterns based on title
+        const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+        ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+
+        // Random geometric shapes
+        for (let i = 0; i < 20; i++) {
+            const x = (hash * i * 13) % 128;
+            const y = (hash * i * 17) % 96;
+            const size = (hash * i * 7) % 30 + 5;
+
+            ctx.globalAlpha = 0.3 + (i % 5) * 0.1;
+
+            if (i % 3 === 0) {
+                ctx.fillRect(x, y, size, size);
+            } else if (i % 3 === 1) {
+                ctx.beginPath();
+                ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + size, y + size / 2);
+                ctx.lineTo(x, y + size);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // Scanlines for PS1 effect
+        ctx.globalAlpha = 0.3;
+        ctx.strokeStyle = '#000';
+        for (let y = 0; y < 96; y += 2) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(128, y);
+            ctx.stroke();
+        }
+
+        // Title text
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.font = 'bold 8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(title, 64, 90);
+    }
+
+    setupControls() {
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => {
+            this.keys[e.code] = true;
+
+            if (e.code === 'Escape') {
+                this.togglePause();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            this.keys[e.code] = false;
+        });
+
+        // Mouse controls
+        document.getElementById('startBtn').addEventListener('click', () => {
+            this.lockPointer();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            this.mouse.locked = document.pointerLockElement === this.canvas;
+
+            if (this.mouse.locked) {
+                document.getElementById('instructions').classList.add('hidden');
+                document.getElementById('ui').classList.remove('hidden');
+                document.getElementById('crosshair').classList.remove('hidden');
+            } else {
+                document.getElementById('instructions').classList.remove('hidden');
+                document.getElementById('ui').classList.add('hidden');
+                document.getElementById('crosshair').classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!this.mouse.locked || this.paused) return;
+
+            this.player.rotation.y -= e.movementX * this.mouseSensitivity;
+            this.player.rotation.x -= e.movementY * this.mouseSensitivity;
+
+            // Clamp vertical rotation
+            this.player.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.player.rotation.x));
+        });
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth * this.ps1Settings.resolution;
+            const height = window.innerHeight * this.ps1Settings.resolution;
+            this.renderer.setSize(width, height);
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+        });
+    }
+
+    lockPointer() {
+        this.canvas.requestPointerLock();
+    }
+
+    togglePause() {
+        this.paused = !this.paused;
+        if (this.paused) {
+            document.exitPointerLock();
+        } else {
+            this.lockPointer();
+        }
+    }
+
+    setupUI() {
+        // Start animation loop
+        this.animate();
+    }
+
+    updateMovement(deltaTime) {
+        if (this.paused) return;
+
+        const moveSpeed = this.player.speed * deltaTime;
+        const moveVector = new THREE.Vector3();
+
+        // Calculate movement direction
+        if (this.keys['KeyW']) moveVector.z -= 1;
+        if (this.keys['KeyS']) moveVector.z += 1;
+        if (this.keys['KeyA']) moveVector.x -= 1;
+        if (this.keys['KeyD']) moveVector.x += 1;
+
+        // Normalize for diagonal movement
+        if (moveVector.length() > 0) {
+            moveVector.normalize();
+        }
+
+        // Apply rotation to movement
+        moveVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.player.rotation.y);
+        moveVector.multiplyScalar(moveSpeed);
+
+        // Update position with collision detection
+        const newPosition = this.player.position.clone().add(moveVector);
+
+        if (!this.checkCollision(newPosition)) {
+            this.player.position.copy(newPosition);
+        }
+
+        // Update camera
+        this.camera.position.copy(this.player.position);
+        this.camera.rotation.order = 'YXZ';
+        this.camera.rotation.y = this.player.rotation.y;
+        this.camera.rotation.x = this.player.rotation.x;
+
+        // Check for nearby artworks
+        this.checkArtworkProximity();
+    }
+
+    checkCollision(position) {
+        // Simple collision detection with scene objects
+        const collisionRadius = this.player.radius;
+
+        for (let obj of this.scene.children) {
+            if (obj.userData.isWall) {
+                const distance = position.distanceTo(obj.position);
+                if (distance < collisionRadius + 0.5) {
+                    return true;
+                }
+            }
+        }
+
+        // Keep player in bounds
+        if (Math.abs(position.x) > 24 || Math.abs(position.z) > 24) {
+            return true;
+        }
+
+        return false;
+    }
+
+    checkArtworkProximity() {
+        for (let artwork of this.artworks) {
+            const distance = this.player.position.distanceTo(artwork.position);
+
+            if (distance < 3 && !this.artworksFound.has(artwork.title)) {
+                this.artworksFound.add(artwork.title);
+                document.getElementById('artCount').textContent = this.artworksFound.size;
+
+                // Add pulse effect to artwork
+                artwork.mesh.material.emissiveIntensity = 1;
+            }
+        }
+    }
+
+    updateFPS() {
+        this.fpsCounter++;
+        const currentTime = performance.now();
+
+        if (currentTime >= this.fpsTime + 1000) {
+            this.fps = this.fpsCounter;
+            this.fpsCounter = 0;
+            this.fpsTime = currentTime;
+
+            document.getElementById('fps').textContent = this.fps;
+        }
+    }
+
+    updateUI() {
+        const pos = this.player.position;
+        document.getElementById('position').textContent =
+            `${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}`;
+    }
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+
+        const deltaTime = this.clock.getDelta();
+
+        this.updateMovement(deltaTime);
+        this.updateFPS();
+        this.updateUI();
+
+        // Add subtle vertex jitter effect for PS1 look
+        if (!this.paused) {
+            this.scene.traverse((obj) => {
+                if (obj.isMesh && obj.geometry.attributes.position) {
+                    const positions = obj.geometry.attributes.position.array;
+                    for (let i = 0; i < positions.length; i += 3) {
+                        positions[i] += (Math.random() - 0.5) * this.ps1Settings.vertexJitter * 0.1;
+                        positions[i + 1] += (Math.random() - 0.5) * this.ps1Settings.vertexJitter * 0.1;
+                        positions[i + 2] += (Math.random() - 0.5) * this.ps1Settings.vertexJitter * 0.1;
+                    }
+                    obj.geometry.attributes.position.needsUpdate = true;
+                }
+            });
+        }
+
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+// Initialize the game when the page loads
+window.addEventListener('load', () => {
+    new PS1ArtGallery();
+});

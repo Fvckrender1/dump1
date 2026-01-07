@@ -1,46 +1,83 @@
-# Crystal Growth Simulator
+# Interactive Art Projects
+
+A collection of interactive web-based art experiences featuring vintage PS1 aesthetics and particle systems.
+
+![Status](https://img.shields.io/badge/status-active-success)
+
+## Projects
+
+### 🎮 PS1 Art Gallery - Dungeon Explorer
+**File:** `gallery.html`
+
+A vintage PlayStation 1-style first-person dungeon crawler that doubles as an immersive art gallery experience. Explore dark corridors and discover procedurally generated artworks.
+
+#### Features
+- **Authentic PS1 Graphics**: Low-resolution rendering, vertex jitter, flat shading, and texture warping
+- **First-Person Controls**: WASD movement with mouse look (pointer lock)
+- **Dungeon Environment**: Cross-pattern hallways with multiple gallery rooms
+- **Procedural Artwork**: 6 unique procedurally generated artworks with neon glow effects
+- **Atmospheric Lighting**: Colored point lights and fog for moody dungeon ambiance
+- **Collision Detection**: Physics-based player movement with wall collision
+- **Performance Tracking**: Real-time FPS counter and position display
+
+#### Controls
+- **WASD** - Move forward/backward/strafe
+- **Mouse** - Look around (first-person view)
+- **ESC** - Pause/unpause
+- **Click "Enter Gallery"** - Lock pointer and start exploring
+
+#### Technical Details
+- Built with **Three.js** (r128) for 3D rendering
+- Low-resolution rendering (50% native) for authentic PS1 pixelation
+- Flat shading and vertex color variation for retro look
+- Real-time vertex jittering for PSX-style geometric instability
+- Procedural art generation using Canvas 2D API
+- Dynamic fog and point light system
+
+---
+
+### 💎 Crystal Growth Simulator
+**File:** `index.html`
 
 An interactive particle system where clicks spawn crystalline formations that grow and refract light. Built with vanilla JavaScript and HTML5 Canvas.
 
-![Crystal Growth Simulator](https://img.shields.io/badge/status-active-success)
+#### Features
 
-## Features
-
-### Interactive Crystal Growth
+##### Interactive Crystal Growth
 - **Click to Spawn**: Click anywhere on the canvas to spawn a crystalline formation
 - **Recursive Branching**: Crystals grow using a recursive branching algorithm with multiple generations
 - **Real-time Growth**: Watch crystals grow dynamically from their spawn point
 
-### Visual Effects
+##### Visual Effects
 - **Light Refraction**: Radial gradients and glow effects simulate light refraction through crystals
 - **Particle System**: Thousands of particles emit from crystal structures with physics-based movement
 - **Shadow & Bloom**: Atmospheric rendering with shadow blur and bloom effects
 - **Fade Trails**: Motion trails create ethereal visual effects
 
-### User Controls
+##### User Controls
 
-#### Growth Parameters
+###### Growth Parameters
 - **Growth Speed** (0.5 - 5.0): Control how fast crystals grow
 - **Complexity** (3 - 12): Adjust the number of branches per node
 - **Branch Length** (10 - 100): Set the length of crystal branches
 - **Particle Density** (0.1 - 2.0): Control particle emission rate
 
-#### Color Palettes
+###### Color Palettes
 - **Ice Blues**: Cool cyan and blue tones for icy crystalline structures
 - **Acid Greens**: Vibrant green hues for toxic-looking crystals
 - **Blood Reds**: Deep red and crimson for dramatic formations
 - **Aurora**: Soft pastel gradient inspired by northern lights
 - **Toxic**: Purple and magenta for otherworldly crystals
 
-#### Actions
+###### Actions
 - **Clear Canvas**: Remove all crystals and particles
 - **Pause/Resume**: Freeze and resume the simulation
 
-## Technical Details
+#### Technical Details
 
-### Architecture
+##### Architecture
 
-#### Classes
+###### Classes
 - **Particle**: Individual light particles with physics simulation
   - Position, velocity, life cycle
   - Decay and alpha blending
@@ -61,13 +98,13 @@ An interactive particle system where clicks spawn crystalline formations that gr
   - User input handling
   - Particle and crystal management
 
-### Rendering Techniques
+##### Rendering Techniques
 - **Fade Trail Effect**: Canvas cleared with low-alpha black for motion blur
 - **Layered Rendering**: Particles → Crystal branches → Central cores
 - **GPU-Accelerated**: Uses Canvas2D with hardware acceleration
 - **Shadow Blur**: Multiple blur layers for depth perception
 
-### Performance
+##### Performance
 - Particle limit: 1000 concurrent particles
 - Automatic particle cleanup when life expires
 - Efficient canvas operations with alpha blending
