@@ -274,6 +274,7 @@ class CrystalSimulator {
     }
 
     init() {
+        console.log('Crystal Simulator initialized');
         this.resize();
         window.addEventListener('resize', () => this.resize());
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
@@ -291,6 +292,15 @@ class CrystalSimulator {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
+        console.log('Click detected at:', x, y);
+        console.log('Current palette:', this.settings.palette);
+
+        // Immediate visual feedback for debugging
+        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 10, 0, Math.PI * 2);
+        this.ctx.fill();
+
         const colorPalette = this.colorPalettes[this.settings.palette];
         const crystal = new Crystal(
             x,
@@ -301,6 +311,7 @@ class CrystalSimulator {
         );
 
         this.crystals.push(crystal);
+        console.log('Crystal created, total crystals:', this.crystals.length);
         this.spawnImpactParticles(x, y, colorPalette);
     }
 
@@ -379,6 +390,11 @@ class CrystalSimulator {
 
         // Draw crystals
         this.crystals.forEach(crystal => crystal.draw(this.ctx));
+
+        // Debug: Draw a visible indicator when there are crystals
+        if (this.crystals.length > 0 && this.crystals.length === 1) {
+            console.log('Drawing crystal at:', this.crystals[0].x, this.crystals[0].y);
+        }
     }
 
     animate() {
