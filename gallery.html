@@ -15,7 +15,6 @@
             font-family: 'Courier New', monospace;
             background: #000;
             overflow: hidden;
-            cursor: none;
         }
 
         #gameCanvas {
@@ -109,11 +108,17 @@
             cursor: pointer;
             box-shadow: 0 0 10px #0ff;
             transition: all 0.2s;
+            text-transform: uppercase;
         }
 
         #instructions button:hover {
             background: #fff;
             box-shadow: 0 0 20px #fff;
+            transform: scale(1.05);
+        }
+
+        #instructions button:active {
+            transform: scale(0.95);
         }
 
         .hidden {

@@ -45,6 +45,17 @@ class PS1ArtGallery {
     }
 
     init() {
+        console.log('Initializing PS1 Art Gallery...');
+
+        // Check if Three.js is loaded
+        if (typeof THREE === 'undefined') {
+            console.error('THREE.js not loaded!');
+            document.getElementById('loading').textContent = 'ERROR: THREE.js failed to load';
+            return;
+        }
+
+        console.log('THREE.js loaded successfully');
+
         this.setupScene();
         this.setupRenderer();
         this.setupCamera();
@@ -54,6 +65,7 @@ class PS1ArtGallery {
 
         // Hide loading screen
         document.getElementById('loading').classList.add('hidden');
+        console.log('Initialization complete!');
     }
 
     setupScene() {
@@ -78,6 +90,8 @@ class PS1ArtGallery {
         this.canvas.style.height = '100vh';
 
         this.renderer.shadowMap.enabled = false; // No shadows for performance
+
+        console.log('Renderer setup complete:', width, 'x', height);
     }
 
     setupCamera() {
@@ -376,22 +390,28 @@ class PS1ArtGallery {
         });
 
         // Mouse controls
-        document.getElementById('startBtn').addEventListener('click', () => {
-            this.lockPointer();
+        const startBtn = document.getElementById('startBtn');
+        if (startBtn) {
+            startBtn.addEventListener('click', () => {
+                console.log('Start button clicked');
+                this.lockPointer();
+            });
+        }
+
+        // Support both webkit and standard pointer lock
+        document.addEventListener('pointerlockchange', () => this.handlePointerLockChange());
+        document.addEventListener('mozpointerlockchange', () => this.handlePointerLockChange());
+        document.addEventListener('webkitpointerlockchange', () => this.handlePointerLockChange());
+
+        // Handle pointer lock errors
+        document.addEventListener('pointerlockerror', () => {
+            console.error('Pointer lock failed');
         });
-
-        document.addEventListener('pointerlockchange', () => {
-            this.mouse.locked = document.pointerLockElement === this.canvas;
-
-            if (this.mouse.locked) {
-                document.getElementById('instructions').classList.add('hidden');
-                document.getElementById('ui').classList.remove('hidden');
-                document.getElementById('crosshair').classList.remove('hidden');
-            } else {
-                document.getElementById('instructions').classList.remove('hidden');
-                document.getElementById('ui').classList.add('hidden');
-                document.getElementById('crosshair').classList.add('hidden');
-            }
+        document.addEventListener('mozpointerlockerror', () => {
+            console.error('Pointer lock failed');
+        });
+        document.addEventListener('webkitpointerlockerror', () => {
+            console.error('Pointer lock failed');
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -414,8 +434,42 @@ class PS1ArtGallery {
         });
     }
 
+    handlePointerLockChange() {
+        const isLocked = document.pointerLockElement === this.canvas ||
+                        document.mozPointerLockElement === this.canvas ||
+                        document.webkitPointerLockElement === this.canvas;
+
+        this.mouse.locked = isLocked;
+
+        if (isLocked) {
+            console.log('Pointer locked');
+            document.getElementById('instructions').classList.add('hidden');
+            document.getElementById('ui').classList.remove('hidden');
+            document.getElementById('crosshair').classList.remove('hidden');
+            document.body.style.cursor = 'none';
+        } else {
+            console.log('Pointer unlocked');
+            document.getElementById('instructions').classList.remove('hidden');
+            document.getElementById('ui').classList.add('hidden');
+            document.getElementById('crosshair').classList.add('hidden');
+            document.body.style.cursor = 'default';
+        }
+    }
+
     lockPointer() {
-        this.canvas.requestPointerLock();
+        const canvas = this.canvas;
+        console.log('Requesting pointer lock');
+
+        // Support different browser prefixes
+        canvas.requestPointerLock = canvas.requestPointerLock ||
+                                   canvas.mozRequestPointerLock ||
+                                   canvas.webkitRequestPointerLock;
+
+        if (canvas.requestPointerLock) {
+            canvas.requestPointerLock();
+        } else {
+            console.error('Pointer lock not supported');
+        }
     }
 
     togglePause() {
